@@ -1,8 +1,10 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import CurrencyRow from './Components/CurrencyRow';
 import './App.css'
-const KEY = process.env.REACT_APP_API_KEY;
-const BASE_URL =`http://api.exchangeratesapi.io/v1/latest?access_key=${KEY}`;
+// const KEY = process.env.REACT_APP_API_KEY;
+// const BASE_URL =`http://api.exchangeratesapi.io/v1/latest?access_key=${KEY}`;
+const API_KEY = process.env.REACT_APP_KEY;
+const BASE_URL = `https://economia.awesomeapi.com.br/json`;
 
 function App(){
   const [currencyOptions, setCurrencyOptions] = useState([])
@@ -15,29 +17,37 @@ function App(){
   let toAmount, fromAmount
   if (amountInFromCurrency) {
     fromAmount = amount
-    toAmount = amount * exchangeRate
+    toAmount = (amount * exchangeRate).toFixed(2);
   } else {
     toAmount = amount
-    fromAmount = amount / exchangeRate
+    fromAmount = (amount / exchangeRate).toFixed(2);
   }
 
-  useEffect(() => {
-    fetch(BASE_URL)
+  useEffect(() => { 
+    fetch(`${BASE_URL}/all`)
       .then(res => res.json())
       .then(data => {
-        const firstCurrency = Object.keys(data.rates)[0]
-        setCurrencyOptions([data.base, ...Object.keys(data.rates)])
-        setFromCurrency(data.base)
-        setToCurrency(firstCurrency)
-        setExchangeRate(data.rates[firstCurrency])
-      })
+       const firstCurrency = Object.keys(data)[0];
+        const baseCurrency = Object.keys(data)[7];
+        setCurrencyOptions(...[Object.keys(data)]);
+        setFromCurrency(baseCurrency);
+        setToCurrency(firstCurrency);
+        console.log(fromCurrency);
+        console.log(toCurrency);
+      }
+      ).catch((e)=>console.log(e));
   }, [])
 
   useEffect(() => {
     if (fromCurrency != null && toCurrency != null) {
-      fetch(`${BASE_URL}&symbols=${toCurrency}`)
+      fetch(`${BASE_URL}/last/${fromCurrency}-${toCurrency}`)
         .then(res => res.json())
-        .then(data => setExchangeRate(data.rates[toCurrency]))
+        .then(data => {
+          const converter = Object.keys(data)[0];
+        setExchangeRate(data[converter].bid);
+        console.log(data);
+        console.log(exchangeRate);
+      }).catch((e)=>console.log(e));
     }
   }, [fromCurrency, toCurrency])
 
